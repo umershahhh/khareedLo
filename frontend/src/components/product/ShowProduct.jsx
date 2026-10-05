@@ -3,7 +3,7 @@ import AppContext from '../../context/AppContext'
 import { Link } from 'react-router-dom'
 
 function ShowProduct() {
-  const {products, filterData} = useContext(AppContext)
+  const {products, filterData, addToCart, getCart} = useContext(AppContext)
   return (
     <div className='grid grid-cols-3 gap-4 my-5 mx-5 '>
       {filterData?.map((product)=><div key={product._id} className="border-2  justify-center items-center flex flex-col">
@@ -13,7 +13,7 @@ function ShowProduct() {
         <div className="">{product.price}</div>
         <div className="">{product.category}</div>
         <div className="">{product.imgSrc}</div>
-        <button className='bg-amber-400 w-full '>Add To Cart</button>
+        <button onClick={() =>{addToCart(product._id, product.title, product.price, 1, product.category, product.imgSrc)}} className='bg-amber-400 w-full '>Add To Cart</button>
         </Link>
         </div>
       )}

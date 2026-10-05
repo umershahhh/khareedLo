@@ -6,7 +6,7 @@ const Navbar = () => {
   const [searchText, setSearchText] = useState("");
   const navigate = useNavigate();
   const location = useLocation();
-  const { products, setFilterData, logout ,isAuthenticated } = useContext(AppContext);
+  const { products, setFilterData, logout ,isAuthenticated, cartData } = useContext(AppContext);
   const onSubmitHandler = (e) => {
     e.preventDefault();
     navigate(`/products/search/${searchText}`);
@@ -43,13 +43,14 @@ const Navbar = () => {
           </Link>
           {isAuthenticated && (
             <>
-             <button className="cart cursor-pointer bg-amber-300 py-3 px-2 rounded-full">
+             <Link to={'/getCart'} className="cart cursor-pointer bg-amber-300 py-3 px-2 rounded-full">
+             <div className="">{cartData?.items?.length}</div>
             cart
-          </button>
+          </Link>
          
-          <button className="profile cursor-pointer bg-amber-300 py-3 px-2 rounded-full">
+          <Link to={'/getProfile'} className="profile cursor-pointer bg-amber-300 py-3 px-2 rounded-full">
             profile
-          </button>
+          </Link>
           <button onClick={()=>{
             logout()
             navigate('/')

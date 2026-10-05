@@ -8,6 +8,9 @@ import Navbar from './components/Navbar'
 import SearchProduct from './components/product/SearchProduct'
 import Register from './components/user/Register'
 import Login from './components/user/Login'
+import Profile from './components/user/Profile'
+import Cart from './components/Cart'
+import Address from './components/Address'
 
 const App = () => {
   
@@ -20,6 +23,9 @@ const App = () => {
       <Route path='/products/search/:item' element={<SearchProduct/>}/>
       <Route path='/register' element={<Register/>}/>
       <Route path='/login' element={<Login/>}/>
+      <Route path='/getProfile' element={<Profile/>}/>
+      <Route path='/getCart' element={<Cart/>}/>
+      <Route path='/shipping' element={<Address/>}/>
       </Routes>
     </Router>
   )

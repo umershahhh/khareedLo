@@ -6,11 +6,17 @@ const userRouter = require("./routers/userRouter.js");
 const productRouter = require("./routers/productRouter.js")
 const cartRouter = require("./routers/cartRouter.js")
 const addressRouter = require("./routers/addressRouter.js")
+const cors = require("cors")
 
 const app = express();
 connectDB();
 
 app.use(express.json());
+app.use(cors({
+  origin: true,
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+  credentials: true
+}))
 
 app.use("/api/users", userRouter);
 app.use("/api/products", productRouter);
