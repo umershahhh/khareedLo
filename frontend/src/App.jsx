@@ -11,14 +11,18 @@ import Login from './components/user/Login'
 import Profile from './components/user/Profile'
 import Cart from './components/Cart'
 import Address from './components/Address'
+import Checkout from './components/Checkout'
+import Home from './components/Home'
+import OrderConfirmation from './components/OrderConfirmation'
 
 const App = () => {
   
   return (
     <Router>
-      <Navbar/>
+      {/* <Navbar/> */}
       <Routes>
-      <Route path='/' element={<ShowProduct/>}/>
+      <Route path='/' element={<Home/>}/>
+      <Route path='/products' element={<ShowProduct/>}/>
       <Route path='/products/:id' element={<ProductDetail/>}/>
       <Route path='/products/search/:item' element={<SearchProduct/>}/>
       <Route path='/register' element={<Register/>}/>
@@ -26,6 +30,8 @@ const App = () => {
       <Route path='/getProfile' element={<Profile/>}/>
       <Route path='/getCart' element={<Cart/>}/>
       <Route path='/shipping' element={<Address/>}/>
+      <Route path='/checkout' element={<Checkout/>}/>
+      <Route path='/confirmOrder' element={<OrderConfirmation/>}/>
       </Routes>
     </Router>
   )

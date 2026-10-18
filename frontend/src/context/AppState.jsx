@@ -5,37 +5,58 @@ import axios from "axios";
 const AppState = (props) => {
   const url = "http://localhost:4000/api";
   const [products, setproducts] = useState([]);
-  const [token, setToken] = useState([]);
+  const [token, setToken] = useState(
+  () => localStorage.getItem("token") || "");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [filterData, setFilterData] = useState([]); 
+  const [filterData, setFilterData] = useState([]);
   const [user, setUser] = useState();
   const [cartData, setCartData] = useState([]);
   const [reload, setReload] = useState(false);
-  const [userAddress, setUserAddress] = useState('');
+  const [userAddress, setUserAddress] = useState("");
 
-  useEffect(() => {
-    const fetchProducts = async () => {
+ // 1. Load token and authentication state when the component mounts
+useEffect(() => {
+  const savedToken = localStorage.getItem("token");
+
+  if (savedToken) {
+    setToken(savedToken);
+    setIsAuthenticated(true);
+  } else {
+    setToken("");
+    setIsAuthenticated(false);
+  }
+}, []);
+
+// 2. Fetch data after the token is loaded or when reload changes
+useEffect(() => {
+  const fetchProducts = async () => {
+    try {
       const api = await axios.get(`${url}/products/getAll`, {
         headers: {
-          "content-type": "Application/json",
+          "Content-Type": "application/json",
         },
         withCredentials: true,
       });
+
       setproducts(api.data.products);
       setFilterData(api.data.products);
-    };
-    localStorage.getItem("token") && setToken(localStorage.getItem("token"));
+    } catch (error) {
+      console.error(
+        "Fetch products error:",
+        error.response?.data || error.message
+      );
+    }
+  };
 
-    fetchProducts();
+  fetchProducts();
+
+  // Only call protected APIs when a token exists
+  if (token) {
     userProfile();
-    getCart()
+    getCart();
     fetchUserAddress();
-  }, [token, reload]);
-
-  useEffect(() =>{
-    localStorage.getItem("token") && setToken(localStorage.getItem("token"));
-    setIsAuthenticated(localStorage.getItem("token") ? true : false)
-  })
+  }
+}, [token, reload]);
 
   //register
 
@@ -85,131 +106,171 @@ const AppState = (props) => {
 
   //logout
 
-  const logout = () =>{
+  const logout = () => {
     setIsAuthenticated(false);
-    setToken("")
-    localStorage.removeItem('token')
-  }
+    setToken("");
+    localStorage.removeItem("token");
+  };
 
   //profile
 
-   const userProfile = async () => {
-    const api = await axios.get(
-      `${url}/users/getProfile`,
-      {
-        headers: {
-          "content-type": "Application/json",
-          "Auth": token,
-        },
-        withCredentials: true,
+ async function userProfile ()  {
+  try{
+    const savedToken = localStorage.getItem("token");
+    if(!savedToken){
+      console.log("No token found, user is not authenticated");
+      return;
+    }
+    
+    const api = await axios.get(`${url}/users/getProfile`, {
+      headers: {
+        "content-type": "Application/json",
+        Auth: token,
       },
-    );
-    console.log(api.data,"user profile");
-    setUser(api.data.user)
-    // return api.data;
-    // console.log("user registered", api)
-    // alert(api.data.message)
+      withCredentials: true,
+    });
+    console.log(api.data, "user profile");
+    setUser(api.data.user);
+  } catch (error){
+    console.error("Error fetching user profile:", error.response?.data || error.message);
+  }
+    
   };
 
   //add to cart
 
-    const addToCart = async (productId, title, price, qty, category, imgSrc) => {
-      const api = await axios.post(`${url}/cart/add`, {
-        productId, title, price, qty, category, imgSrc
-      }, {
+  const addToCart = async (productId, title, price, qty, category, imgSrc) => {
+    try{
+      const savedToken = localStorage.getItem("token");
+      if(!savedToken){
+        console.log("No token found, user is not authenticated");
+        return;
+      }
+ const api = await axios.post(
+      `${url}/cart/add`,
+      {
+        productId,
+        title,
+        price,
+        qty,
+        category,
+        imgSrc,
+      },
+      {
         headers: {
           "content-type": "Application/json",
-          "Auth": token,
+          Auth: token,
         },
         withCredentials: true,
-      });
-      setReload(!reload)
-      // console.log(api.data)
-    };
+      },
+    );
+    setReload(!reload);
+    // console.log(api.data)
+    } catch (error){
+      console.error("Error adding to cart:", error.response?.data || error.message);
+    }
+   
+  };
 
-    const getCart = async () => {
-      const api = await axios.get(`${url}/cart/getUser`,  {
+  const getCart = async () => {
+    const api = await axios.get(`${url}/cart/getUser`, {
+      headers: {
+        "content-type": "Application/json",
+        Auth: token,
+      },
+      withCredentials: true,
+    });
+    console.log(api.data, "user get cart");
+    setCartData(api.data.cart);
+  };
+
+  const decreaseQty = async (productId, qty) => {
+    const api = await axios.post(
+      `${url}/cart/decrease-qty`,
+      { productId, qty },
+      {
         headers: {
           "content-type": "Application/json",
-          "Auth": token,
+          Auth: token,
         },
         withCredentials: true,
-      });
-      console.log(api.data, "user get cart")
-      setCartData(api.data.cart)
-    };
+      },
+    );
+    console.log(api, "decrease qty");
+    setReload(!reload);
+  };
 
-    const decreaseQty = async (productId, qty) => {
-      const api = await axios.post(`${url}/cart/decrease-qty`, 
-        {productId, qty},  {
+  const removeFromCart = async (productId) => {
+    const api = await axios.delete(`${url}/cart/remove/${productId}`, {
+      headers: {
+        "content-type": "Application/json",
+        Auth: token,
+      },
+      withCredentials: true,
+    });
+    console.log(api, "remove from cart");
+    setReload(!reload);
+  };
+
+  //clear cart
+  const clearCart = async () => {
+    const api = await axios.delete(`${url}/cart/clear/${user?._id}`, {
+      headers: {
+        "content-type": "Application/json",
+        Auth: token,
+      },
+      withCredentials: true,
+    });
+    console.log(api, "clear cart");
+    setReload(!reload);
+  };
+
+  //shipping
+
+  const shippingAddress = async (
+    fullName,
+    address,
+    city,
+    state,
+    country,
+    phoneNumber,
+  ) => {
+    const api = await axios.post(
+      `${url}/address/add`,
+      {
+        fullName,
+        address,
+        city,
+        state,
+        country,
+        phoneNumber,
+      },
+      {
         headers: {
           "content-type": "Application/json",
-          "Auth": token,
+          Auth: token,
         },
         withCredentials: true,
-      });
-      console.log(api, "decrease qty")
-      setReload(!reload)
-    };
+      },
+    );
+    return api.data;
+    setReload(!reload);
+    // console.log(api.data)
+  };
 
-    const removeFromCart = async (productId) => {
-      const api = await axios.delete(`${url}/cart/remove/${productId}`, 
-         {
-        headers: {
-          "content-type": "Application/json",
-          "Auth": token,
-        },
-        withCredentials: true,
-      });
-      console.log(api, "remove from cart")
-      setReload(!reload)
-    };
+  //get old address
 
-    //clear cart
-    const clearCart = async () => {
-      const api = await axios.delete(`${url}/cart/clear/${user?._id}`, 
-         {
-        headers: {
-          "content-type": "Application/json",
-          "Auth": token,
-        },
-        withCredentials: true,
-      });
-      console.log(api, "clear cart")
-      setReload(!reload)
-    };
-
-    //shipping
-
-    const shippingAddress = async (fullName, address, city, state, country, phoneNumber) => {
-      const api = await axios.post(`${url}/address/add`, {
-        fullName, address, city, state, country, phoneNumber
-      }, {
-        headers: {
-          "content-type": "Application/json",
-          "Auth": token,
-        },
-        withCredentials: true,
-      });
-      return api.data;
-      setReload(!reload)
-      // console.log(api.data)
-    };
-
-    //get old address
-
-    const fetchUserAddress = async () => {
-      const api = await axios.get(`${url}/address/get`, {
-        headers: {
-          "content-type": "Application/json",
-          "Auth": token,
-        },
-        withCredentials: true,
-      });
-      // console.log(api.data.userAddress, "user address fetched")
-      setUserAddress(api.data.userAddress)
-    };
-
+  const fetchUserAddress = async () => {
+    const api = await axios.get(`${url}/address/get`, {
+      headers: {
+        "content-type": "Application/json",
+        Auth: token,
+      },
+      withCredentials: true,
+    });
+    // console.log(api.data.userAddress, "user address fetched")
+    setUserAddress(api.data.userAddress);
+  };
 
   return (
     <AppContext.Provider
@@ -233,7 +294,7 @@ const AppState = (props) => {
         removeFromCart,
         clearCart,
         shippingAddress,
-        userAddress
+        userAddress,
       }}
     >
       {props.children}

@@ -1,1 +1,55 @@
+
+@import url('https://fonts.googleapis.com/css2?family=Great+Vibes&family=Outfit:wght@400;500;600;700&display=swap');
+
 @import "tailwindcss";
+
+/* Global theme */
+:root {
+  --color-primary: #26382b;
+  --color-secondary: #d8b98c;
+  --color-background: #fcfaf7;
+  --color-surface: #ffffff;
+  --color-text: #252822;
+  --color-muted: #777970;
+  --color-border: #e7e2d9;
+
+  --font-body: 'Outfit', sans-serif;
+  --font-script: 'Great Vibes', cursive;
+
+  --radius-card: 12px;
+}
+
+/* Global defaults */
+body {
+  margin: 0;
+  background-color: var(--color-background);
+  color: var(--color-text);
+  font-family: var(--font-body);
+}
+
+/* Reusable custom classes */
+.brand-font {
+  font-family: var(--font-script);
+}
+
+.btn-primary {
+  background-color: var(--color-primary);
+  color: white;
+  border-radius: 6px;
+  padding: 10px 20px;
+  transition: opacity 0.2s ease;
+}
+
+.btn-primary:hover {
+  opacity: 0.88;
+}
+
+.product-card {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+}
+
+.great-vibes {
+  font-family: 'Great Vibes', cursive;
+}
