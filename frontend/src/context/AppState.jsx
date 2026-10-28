@@ -2,17 +2,21 @@ import React, { useEffect, useState } from "react";
 import AppContext from "./AppContext";
 import axios from "axios";
 
+
 const AppState = (props) => {
   const url = "http://localhost:4000/api";
   const [products, setproducts] = useState([]);
+  const [adminProducts, setAdminProducts] = useState([]);
   const [token, setToken] = useState(
   () => localStorage.getItem("token") || "");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [filterData, setFilterData] = useState([]);
-  const [user, setUser] = useState();
+  const [user, setUser] = useState(null);
   const [cartData, setCartData] = useState([]);
   const [reload, setReload] = useState(false);
   const [userAddress, setUserAddress] = useState("");
+  const [allOrders, setAllOrders] = useState([]);
+  const [allUsers, setAllUsers] = useState([]);
 
  // 1. Load token and authentication state when the component mounts
 useEffect(() => {
@@ -49,7 +53,6 @@ useEffect(() => {
   };
 
   fetchProducts();
-
   // Only call protected APIs when a token exists
   if (token) {
     userProfile();
@@ -58,6 +61,164 @@ useEffect(() => {
   }
 }, [token, reload]);
 
+
+// 2. Fetch admin products
+
+
+useEffect(() => {
+  const fetchAdminProducts = async () => {
+    const savedToken = localStorage.getItem("token");
+
+    // Only fetch admin products for an authenticated admin.
+    if (!savedToken || user?.role !== "admin") {
+      setAdminProducts([]);
+      return;
+    }
+
+    try {
+      const response = await axios.get(
+        `${url}/admin/getProductsList`,
+        {
+          headers: {
+            Auth: savedToken,
+          },
+          withCredentials: true,
+        }
+      );
+
+      setAdminProducts(response.data.products || []);
+    } catch (error) {
+      console.error(
+        "Admin products error:",
+        error.response?.status,
+        error.response?.data || error.message
+      );
+
+      setAdminProducts([]);
+    }
+  };
+
+  fetchAdminProducts();
+}, [url, token, reload, user?.role]);
+
+
+
+
+
+
+// Admin: Fetch all orders
+useEffect(() => {
+  const fetchAllOrders = async () => {
+    const savedToken = localStorage.getItem("token");
+
+    if (!savedToken || user?.role !== "admin") {
+      setAllOrders([]);
+      return;
+    }
+
+    try {
+      const response = await axios.get(`${url}/admin/getAllOrders`, {
+        headers: {
+          Auth: savedToken,
+        },
+        withCredentials: true,
+      });
+
+      setAllOrders(response.data.orders || []);
+    } catch (error) {
+      console.error(
+        "Fetch orders failed:",
+        error.response?.status,
+        error.response?.data || error.message
+      );
+    }
+  };
+
+  fetchAllOrders();
+}, [url, token, reload, user?.role]);
+
+// Admin: Fetch all users
+useEffect(() => {
+  const fetchAllUsers = async () => {
+    const savedToken = localStorage.getItem("token");
+
+    if (!savedToken || user?.role !== "admin") {
+      setAllUsers([]);
+      return;
+    }
+
+    try {
+      const response = await axios.get(`${url}/admin/getAllUsers`, {
+        headers: {
+          Auth: savedToken,
+        },
+        withCredentials: true,
+      });
+
+      setAllUsers(response.data.users || []);
+    } catch (error) {
+      console.error(
+        "Fetch users failed:",
+        error.response?.status,
+        error.response?.data || error.message
+      );
+    }
+  };
+
+  fetchAllUsers();
+}, [url, token, reload, user?.role]);
+
+
+// Handle expired or invalid authentication globally
+useEffect(() => {
+  const interceptor = axios.interceptors.response.use(
+    (response) => response,
+    (error) => {
+      const status = error.response?.status;
+      const requestUrl = error.config?.url || "";
+
+      // Handle expired/invalid tokens, but don't log out
+      // simply because a login or registration request failed.
+      if (
+        status === 401 &&
+        !/login|register/i.test(requestUrl)
+      ) {
+        localStorage.removeItem("token");
+
+        setToken("");
+        setUser(null);
+        setCartData([]);
+        setUserAddress(null);
+
+        // Clear admin-only data if these states exist
+        setAllOrders([]);
+        setAllUsers([]);
+        setAdminProducts([]);
+      }
+
+      return Promise.reject(error);
+    }
+  );
+
+  return () => {
+    axios.interceptors.response.eject(interceptor);
+  };
+}, []);
+
+useEffect(() => {
+  const fetchPrivateData = async () => {
+    if (!token) {
+      setCartData([]);
+      setUserAddress(null);
+      return;
+    }
+
+    await getCart();
+    await fetchUserAddress();
+  };
+
+  fetchPrivateData();
+}, [token, reload]);
   //register
 
   const register = async (name, email, password) => {
@@ -76,8 +237,6 @@ useEffect(() => {
       },
     );
     return api.data;
-    // console.log("user registered", api)
-    // alert(api.data.message)
   };
 
   //login
@@ -95,9 +254,8 @@ useEffect(() => {
         withCredentials: true,
       },
     );
-    console.log(api.data, api.data.message, "loggin");
-    // console.log("user registered", api)
-    // alert(api.data.message)
+    
+
     setToken(api.data?.token);
     setIsAuthenticated(true);
     localStorage.setItem("token", api.data?.token);
@@ -110,32 +268,44 @@ useEffect(() => {
     setIsAuthenticated(false);
     setToken("");
     localStorage.removeItem("token");
+    setAdminProducts([]);
+    setFilterData([]);
+    setUser(null);
   };
 
   //profile
 
- async function userProfile ()  {
-  try{
+
+async function userProfile() {
+  try {
     const savedToken = localStorage.getItem("token");
-    if(!savedToken){
-      console.log("No token found, user is not authenticated");
-      return;
+
+    if (!savedToken) {
+      setUser(null);
+      return null;
     }
-    
+
     const api = await axios.get(`${url}/users/getProfile`, {
       headers: {
-        "content-type": "Application/json",
-        Auth: token,
+        Auth: savedToken,
       },
       withCredentials: true,
     });
-    console.log(api.data, "user profile");
+
+
     setUser(api.data.user);
-  } catch (error){
-    console.error("Error fetching user profile:", error.response?.data || error.message);
+    return api.data.user;
+  } catch (error) {
+    console.error(
+      "Error fetching user profile:",
+      error.response?.data || error.message
+    );
+
+    setUser(null);
+    return null;
   }
-    
-  };
+}
+
 
   //add to cart
 
@@ -165,7 +335,7 @@ useEffect(() => {
       },
     );
     setReload(!reload);
-    // console.log(api.data)
+  
     } catch (error){
       console.error("Error adding to cart:", error.response?.data || error.message);
     }
@@ -180,7 +350,7 @@ useEffect(() => {
       },
       withCredentials: true,
     });
-    console.log(api.data, "user get cart");
+
     setCartData(api.data.cart);
   };
 
@@ -196,7 +366,7 @@ useEffect(() => {
         withCredentials: true,
       },
     );
-    console.log(api, "decrease qty");
+
     setReload(!reload);
   };
 
@@ -208,7 +378,7 @@ useEffect(() => {
       },
       withCredentials: true,
     });
-    console.log(api, "remove from cart");
+   
     setReload(!reload);
   };
 
@@ -221,7 +391,7 @@ useEffect(() => {
       },
       withCredentials: true,
     });
-    console.log(api, "clear cart");
+    
     setReload(!reload);
   };
 
@@ -253,9 +423,9 @@ useEffect(() => {
         withCredentials: true,
       },
     );
-    return api.data;
     setReload(!reload);
-    // console.log(api.data)
+    return api.data;
+    
   };
 
   //get old address
@@ -268,13 +438,135 @@ useEffect(() => {
       },
       withCredentials: true,
     });
-    // console.log(api.data.userAddress, "user address fetched")
+    
     setUserAddress(api.data.userAddress);
   };
+
+  //publish new product
+  const publishNewProduct = async (title, description, imgSrc, category, qty, price) => {
+    const api = await axios.post(
+      `${url}/admin/addProduct`,
+      {
+        title, description, imgSrc, category, qty, price
+      },
+      {
+        headers: {
+          "content-type": "Application/json",
+          Auth: token,
+        },
+        withCredentials: true,
+      },
+    );
+   
+    return api.data;
+    // alert(api.data.message)
+  };
+
+  //delete product
+  
+const deleteProduct = async (id) => {
+  try {
+    console.log("Product ID:", id);
+
+    if (!id) {
+      console.error("Product ID is undefined");
+      return;
+    }
+
+    const api = await axios.delete(`${url}/admin/delete/${id}`, {
+      headers: {
+        Auth: token,
+      },
+      withCredentials: true,
+    });
+
+    
+
+    setReload((prev) => !prev);
+  } catch (error) {
+    console.error(
+      "Delete product error:",
+      error.response?.data || error.message
+    );
+  }
+};
+
+
+const updateProductDetail = async (id, updatedFields) => {
+  try {
+    if (!id) {
+      console.error("Product ID is missing");
+      return false;
+    }
+
+    const response = await axios.put(
+      `${url}/admin/update/${id}`,
+      updatedFields,
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Auth: token,
+        },
+        withCredentials: true,
+      }
+    );
+
+   
+
+    setReload((prev) => !prev);
+    return true;
+  } catch (error) {
+    console.error(
+      "Update product error:",
+      error.response?.data || error.message
+    );
+    return false;
+  }
+};
+
+const updateOrderStatus = async (id, updatedFields) => {
+  try {
+    if (!id) {
+      console.error("Order ID is missing");
+      return false;
+    }
+
+    const response = await axios.patch(
+      `${url}/admin/status/${id}`,
+      updatedFields,
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Auth: token,
+        },
+        withCredentials: true,
+      }
+    );
+
+    
+
+    setReload((prev) => !prev);
+    return true;
+  } catch (error) {
+    console.error(
+      "Update Order error:",
+      error.response?.data || error.message
+    );
+    return false;
+  }
+};
+
+
 
   return (
     <AppContext.Provider
       value={{
+        allUsers,
+        adminProducts,
+        updateProductDetail,
+        deleteProduct,
+        updateOrderStatus,
+        allOrders,
         products,
         register,
         login,
@@ -287,6 +579,7 @@ useEffect(() => {
         logout,
         userProfile,
         user,
+        setUser,
         addToCart,
         getCart,
         cartData,
@@ -295,6 +588,7 @@ useEffect(() => {
         clearCart,
         shippingAddress,
         userAddress,
+        publishNewProduct
       }}
     >
       {props.children}

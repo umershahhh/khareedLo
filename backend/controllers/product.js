@@ -42,34 +42,5 @@ const getOneProduct = async (req, res) =>{
   }
 }
 
-//update product
 
-const updateProduct = async (req, res) =>{
-  const {id} = req.params;
-  const {title,description, imgSrc, category, qty, price} = req.body;
-  try{
-    const updateProduct = await Product.findByIdAndUpdate(id, {title,description, imgSrc, category, qty, price}, {new: true});
-    res.status(200).json({message: "Product updated successfully", product: updateProduct, success: true})  
-  }
-  catch(error){
-    res.status(400).json({message:error.message, success: false})
-  }
-  }
-
-  //delete product
-
-  const deleteProduct = async (req, res) => {
-    const {id} = req.params;
-    try{
-      const deleteProduct = await Product.findByIdAndDelete(id);
-      if(!deleteProduct){
-        return res.status(404).json({message:"Product not found", success: false})
-      }
-      res.status(200).json({message: "Product deleted successfully", product: deleteProduct, success: true})    
-    }
-    catch(error){
-      res.status(400).json({message:"Invalid product id", success: false})
-    }
-  }
-
-module.exports = {addProduct, getAllProducts, getOneProduct, updateProduct, deleteProduct}
+module.exports = {addProduct, getAllProducts, getOneProduct}

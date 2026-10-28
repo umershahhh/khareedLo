@@ -7,7 +7,6 @@ dotenv.config();
 // register a new user
 
 const registerUser = async (req, res) => {
-  console.log("registerUser called");
   const {name, email, password} = req.body;
   try {
     if(!name || !email || !password){
@@ -48,15 +47,7 @@ const loginUser = async (req, res) => {
 
 // get all users
 
-const getAllUsers = async (req, res) => {
-  try{
-    const users = await User.find().sort({createdAt: -1});
-    res.status(200).json({message: "All users fetched successfully", users, success: true})
-  }
-  catch(error){
-    res.status(500).json({message: "Error occurred while fetching users", success: false})
-  }
-}
+
 
 //get user profile
 
@@ -64,4 +55,4 @@ const getUserProfile = async (req, res) =>{
   res.json({user:req.user})
 }
 
-module.exports = {registerUser, loginUser, getAllUsers, getUserProfile}
+module.exports = {registerUser, loginUser, getUserProfile}

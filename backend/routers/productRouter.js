@@ -13,10 +13,4 @@ router.get("/getAll", getAllProducts);
 //get one product
 router.get("/getOne/:id", getOneProduct);
 
-//update product
-router.put('/update/:id', updateProduct)
-
-//delete product
-router.delete('/delete/:id', deleteProduct)
-
 module.exports = router;

@@ -14,6 +14,9 @@ import Address from './components/Address'
 import Checkout from './components/Checkout'
 import Home from './components/Home'
 import OrderConfirmation from './components/OrderConfirmation'
+import Dashboard from './components/admin/dashboard'
+import ProductView from './components/admin/ProductView'
+import AdminProtectedRoute from './components/AdminProtectedRoute'
 
 const App = () => {
   
@@ -32,6 +35,10 @@ const App = () => {
       <Route path='/shipping' element={<Address/>}/>
       <Route path='/checkout' element={<Checkout/>}/>
       <Route path='/confirmOrder' element={<OrderConfirmation/>}/>
+      <Route element={<AdminProtectedRoute />}>
+      <Route path='/adminDashboard' element={<Dashboard/>}/>
+      <Route path='/adminDashboard/productView' element={<ProductView/>}/>
+      </Route>
       </Routes>
     </Router>
   )
