@@ -25,6 +25,14 @@ app.use(cors({
   credentials: true
 }));
 
+app.use(cors({
+  origin: [
+    "http://localhost:5173",
+    "https://khareedlo.vercel.app"
+  ],
+  credentials: true
+}));
+
 app.use("/api/users", userRouter);
 app.use("/api/products", productRouter);
 app.use("/api/cart", cartRouter);
