@@ -4,7 +4,7 @@ import axios from "axios";
 
 
 const AppState = (props) => {
-  const url = "http://localhost:4000/api";
+  const url = "https://khareedlo.onrender.com/api";
   const [products, setproducts] = useState([]);
   const [adminProducts, setAdminProducts] = useState([]);
   const [token, setToken] = useState(
