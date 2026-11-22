@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 const Cart = require("../models/Cart.js");
 const Order = require("../models/Order.js");
+const sendOrderToN8n = require("../utils/n8n");
 
 // CREATE ORDER
  const createOrder = async (req, res) => {
@@ -85,6 +86,8 @@ const Order = require("../models/Order.js");
     // Clear the cart only after the order has been saved.
     cart.items = [];
     await cart.save();
+    // Trigger n8n automation
+await sendOrderToN8n(order, req.user)
 
     return res.status(201).json({
       success: true,

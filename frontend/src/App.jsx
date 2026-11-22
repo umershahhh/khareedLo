@@ -14,7 +14,7 @@ import Address from './components/Address'
 import Checkout from './components/Checkout'
 import Home from './components/Home'
 import OrderConfirmation from './components/OrderConfirmation'
-import Dashboard from './components/admin/dashboard'
+import Dashboard from './components/admin/Dashboard'
 import ProductView from './components/admin/ProductView'
 import AdminProtectedRoute from './components/AdminProtectedRoute'
 
