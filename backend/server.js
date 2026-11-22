@@ -20,18 +20,23 @@ app.use(cors({
   credentials: true
 }))
 
+
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://khareedlo.vercel.app"
+];
+
 app.use(cors({
-  origin: process.env.FRONTEND_URL,
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
   credentials: true
 }));
 
-app.use(cors({
-  origin: [
-    "http://localhost:5173",
-    "https://khareedlo.vercel.app"
-  ],
-  credentials: true
-}));
 
 app.use("/api/users", userRouter);
 app.use("/api/products", productRouter);
