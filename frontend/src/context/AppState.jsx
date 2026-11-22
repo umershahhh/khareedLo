@@ -4,7 +4,7 @@ import axios from "axios";
 
 
 const AppState = (props) => {
-  const url = "https://khareedlo.onrender.com/api";
+  const url = import.meta.env.VITE_BACKEND_URL;
   const [products, setproducts] = useState([]);
   const [adminProducts, setAdminProducts] = useState([]);
   const [token, setToken] = useState(
