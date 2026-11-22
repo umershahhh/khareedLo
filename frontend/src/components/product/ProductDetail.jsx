@@ -36,7 +36,7 @@ function ProductDetail() {
         setError("");
         setProduct(null);
 
-        const apiUrl = url || "http://localhost:4000/api";
+        const apiUrl = url;
 
         const response = await axios.get(
           `${apiUrl}/products/getOne/${id}`,
